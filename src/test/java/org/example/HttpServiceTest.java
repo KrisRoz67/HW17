@@ -35,7 +35,7 @@ class HttpServiceTest {
                 .willReturn(aResponse().withStatus(200).withBody(responseBody())));
         List<FullResponse> response = httpService.getCocktailByFirstLetter('y');
         assertFalse(response.isEmpty());
-        assertEquals(1,response.size());
+        assertEquals(1, response.size());
         assertEquals("Yellow Bird", response.get(0).getStrDrink());
     }
 

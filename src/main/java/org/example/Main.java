@@ -9,7 +9,7 @@ public class Main {
                 .newBuilder()
                 .connectTimeout(Duration.ofSeconds(3))
                 .build();
-        HttpService service = new HttpService(httpClient,"https://www.thecocktaildb.com");
+        HttpService service = new HttpService(httpClient, "https://www.thecocktaildb.com");
         System.out.println(service.getCocktailByFirstLetter('ä'));
         System.out.println("----------------------------");
         System.out.println(service.getCocktailByName("margarita"));
