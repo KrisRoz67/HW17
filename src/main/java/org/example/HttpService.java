@@ -1,13 +1,12 @@
 package org.example;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -34,21 +33,10 @@ public class HttpService {
 
     public List<CocktailResponse> getCocktailByName(String name) {
         URI uri = URI.create(domain + BASE_PATH + "search.php?s=" + name);
-        HttpRequest request = HttpRequest.newBuilder(uri).GET().build();
+        JsonNode nodeArray = sendRequest(uri);
         try {
-            HttpResponse<String> response =
-                    httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            JsonNode node = mapper.readValue(response.body(), JsonNode.class);
-            JsonNode nodeArray = node.get("drinks");
-            List<CocktailResponse> responses = new ArrayList<>();
-            if (nodeArray.isArray()) {
-                for (JsonNode objNode : nodeArray) {
-                    CocktailResponse partresponse = new CocktailResponse();
-                    partresponse.setStrDrink(objNode.get("strDrink").textValue());
-                    responses.add(partresponse);
-                }
-            }
-            return responses;
+            return mapper.readValue(nodeArray.toString(), new TypeReference<List<CocktailResponse>>() {
+            });
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -69,7 +57,7 @@ public class HttpService {
             int statusCode = response.statusCode();
             if (statusCode >= 200 && statusCode < 300) {
                 if (response.body().isBlank()) {
-                    log.error("We couldn't find a cocktail that matches your request.");
+                    log.error("We couldn't find any cocktail that matches your request.");
                     return null;
                 } else {
                     log.info("Status code :" + statusCode);
@@ -85,23 +73,15 @@ public class HttpService {
         }
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     public List<InformativeCocktailResponse> handleFullResponse(JsonNode nodeArray) {
         List<InformativeCocktailResponse> informativeCocktailResponseArray = new ArrayList<>();
         if (nodeArray != null && nodeArray.isArray() && !nodeArray.isEmpty()) {
-            for (JsonNode objNode : nodeArray) {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                InformativeCocktailResponse full;
-
-                try {
-                    full = mapper.readValue(objNode.toString(), InformativeCocktailResponse.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                informativeCocktailResponseArray.add(full);
+            try {
+                return mapper.readValue(nodeArray.toString(), new TypeReference<List<InformativeCocktailResponse>>() {
+                });
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
             }
-            return informativeCocktailResponseArray;
         } else {
             log.error("No data to present");
             return null;
