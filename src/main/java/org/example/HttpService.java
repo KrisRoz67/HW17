@@ -84,6 +84,7 @@ public class HttpService {
             throw new RuntimeException(e);
         }
     }
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public List<InformativeCocktailResponse> handleFullResponse(JsonNode nodeArray) {
         List<InformativeCocktailResponse> informativeCocktailResponseArray = new ArrayList<>();
@@ -92,29 +93,12 @@ public class HttpService {
                 ObjectMapper mapper = new ObjectMapper();
                 mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
                 InformativeCocktailResponse full;
-              try {
-                   full = mapper.readValue(objNode.traverse(), InformativeCocktailResponse.class);
+
+                try {
+                    full = mapper.readValue(objNode.toString(), InformativeCocktailResponse.class);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-
-//                List<String> ingredients = new ArrayList<>();
-//                FullResponse fullResponse1 = new FullResponse();
-//                fullResponse1.setStrDrink(objNode.get("strDrink").textValue());
-//                fullResponse1.setStrCategory(objNode.get("strCategory").textValue());
-//                fullResponse1.setStrAlcoholic(objNode.get("strAlcoholic").textValue());
-//                fullResponse1.setStrInstructions(objNode.get("strInstructions").textValue());
-//                for (int i = 0; i < 16; i++) {
-//                    if (objNode.get("strIngredient" + i) != null) {
-//                        if (objNode.get("strIngredient" + i).textValue() != null) {
-//                            ingredients.add(objNode.get("strIngredient" + i).textValue());
-//                        }
-//                        i++;
-//                    }
-
-//                }
-//                fullResponse1.setStrIngredient(ingredients);
-//                fullResponseArray.add(fullResponse1);
                 informativeCocktailResponseArray.add(full);
             }
             return informativeCocktailResponseArray;
