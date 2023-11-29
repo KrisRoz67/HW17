@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PartResponse {
+public class CocktailResponse {
     private String strDrink;
 
     public void setStrDrink(String strDrink) {

@@ -1,10 +1,13 @@
 package org.example;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -23,13 +26,13 @@ public class HttpService {
     private final ObjectMapper mapper = new ObjectMapper();
     public static final String BASE_PATH = "/api/json/v1/1/";
 
-    public List<FullResponse> getCocktailByFirstLetter(char s) {
+    public List<InformativeCocktailResponse> getCocktailByFirstLetter(char s) {
         URI uri = URI.create(domain + BASE_PATH + "search.php?f=" + s);
         JsonNode nodeArray = sendRequest(uri);
         return handleFullResponse(nodeArray);
     }
 
-    public List<PartResponse> getCocktailByName(String name) {
+    public List<CocktailResponse> getCocktailByName(String name) {
         URI uri = URI.create(domain + BASE_PATH + "search.php?s=" + name);
         HttpRequest request = HttpRequest.newBuilder(uri).GET().build();
         try {
@@ -37,10 +40,10 @@ public class HttpService {
                     httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             JsonNode node = mapper.readValue(response.body(), JsonNode.class);
             JsonNode nodeArray = node.get("drinks");
-            List<PartResponse> responses = new ArrayList<>();
+            List<CocktailResponse> responses = new ArrayList<>();
             if (nodeArray.isArray()) {
                 for (JsonNode objNode : nodeArray) {
-                    PartResponse partresponse = new PartResponse();
+                    CocktailResponse partresponse = new CocktailResponse();
                     partresponse.setStrDrink(objNode.get("strDrink").textValue());
                     responses.add(partresponse);
                 }
@@ -51,7 +54,7 @@ public class HttpService {
         }
     }
 
-    public List<FullResponse> getRandomCocktail() {
+    public List<InformativeCocktailResponse> getRandomCocktail() {
         URI uri = URI.create(domain + BASE_PATH + "random.php");
         JsonNode nodeArray = sendRequest(uri);
         return handleFullResponse(nodeArray);
@@ -81,29 +84,40 @@ public class HttpService {
             throw new RuntimeException(e);
         }
     }
-
-    public List<FullResponse> handleFullResponse(JsonNode nodeArray) {
-        List<FullResponse> fullResponseArray = new ArrayList<>();
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public List<InformativeCocktailResponse> handleFullResponse(JsonNode nodeArray) {
+        List<InformativeCocktailResponse> informativeCocktailResponseArray = new ArrayList<>();
         if (nodeArray != null && nodeArray.isArray() && !nodeArray.isEmpty()) {
             for (JsonNode objNode : nodeArray) {
-                List<String> ingredients = new ArrayList<>();
-                FullResponse fullResponse1 = new FullResponse();
-                fullResponse1.setStrDrink(objNode.get("strDrink").textValue());
-                fullResponse1.setStrCategory(objNode.get("strCategory").textValue());
-                fullResponse1.setStrAlcoholic(objNode.get("strAlcoholic").textValue());
-                fullResponse1.setStrInstructions(objNode.get("strInstructions").textValue());
-                for (int i = 0; i < 16; i++) {
-                    if (objNode.get("strIngredient" + i) != null) {
-                        if (objNode.get("strIngredient" + i).textValue() != null) {
-                            ingredients.add(objNode.get("strIngredient" + i).textValue());
-                        }
-                        i++;
-                    }
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                InformativeCocktailResponse full;
+              try {
+                   full = mapper.readValue(objNode.traverse(), InformativeCocktailResponse.class);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-                fullResponse1.setStrIngredient(ingredients);
-                fullResponseArray.add(fullResponse1);
+
+//                List<String> ingredients = new ArrayList<>();
+//                FullResponse fullResponse1 = new FullResponse();
+//                fullResponse1.setStrDrink(objNode.get("strDrink").textValue());
+//                fullResponse1.setStrCategory(objNode.get("strCategory").textValue());
+//                fullResponse1.setStrAlcoholic(objNode.get("strAlcoholic").textValue());
+//                fullResponse1.setStrInstructions(objNode.get("strInstructions").textValue());
+//                for (int i = 0; i < 16; i++) {
+//                    if (objNode.get("strIngredient" + i) != null) {
+//                        if (objNode.get("strIngredient" + i).textValue() != null) {
+//                            ingredients.add(objNode.get("strIngredient" + i).textValue());
+//                        }
+//                        i++;
+//                    }
+
+//                }
+//                fullResponse1.setStrIngredient(ingredients);
+//                fullResponseArray.add(fullResponse1);
+                informativeCocktailResponseArray.add(full);
             }
-            return fullResponseArray;
+            return informativeCocktailResponseArray;
         } else {
             log.error("No data to present");
             return null;

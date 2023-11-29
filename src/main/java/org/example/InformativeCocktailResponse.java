@@ -9,14 +9,14 @@ import java.util.List;
 @Getter
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FullResponse {
+public class InformativeCocktailResponse {
     private String strDrink;
     private String strCategory;
     private String strAlcoholic;
     private String strInstructions;
     private List<String> strIngredient;
 
-    public FullResponse() {
+    public InformativeCocktailResponse() {
     }
 
     @Override

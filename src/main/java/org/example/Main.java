@@ -10,10 +10,11 @@ public class Main {
                 .connectTimeout(Duration.ofSeconds(3))
                 .build();
         HttpService service = new HttpService(httpClient, "https://www.thecocktaildb.com");
-        System.out.println(service.getCocktailByFirstLetter('ä'));
-        System.out.println("----------------------------");
+        System.out.println("---Get cocktail by first letter---");
+        System.out.println(service.getCocktailByFirstLetter('b'));
+        System.out.println("---Get cocktail by name-");
         System.out.println(service.getCocktailByName("margarita"));
-        System.out.println("----------------------------");
+        System.out.println("---Get a random cocktail---");
         System.out.println(service.getRandomCocktail());
     }
 }

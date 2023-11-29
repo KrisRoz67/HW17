@@ -33,7 +33,7 @@ class HttpServiceTest {
     void getCocktailByFirstLetter() {
         wiremockextension.stubFor(WireMock.get(HttpService.BASE_PATH + "search.php?f=y")
                 .willReturn(aResponse().withStatus(200).withBody(responseBody())));
-        List<FullResponse> response = httpService.getCocktailByFirstLetter('y');
+        List<InformativeCocktailResponse> response = httpService.getCocktailByFirstLetter('y');
         assertFalse(response.isEmpty());
         assertEquals(1, response.size());
         assertEquals("Yellow Bird", response.get(0).getStrDrink());
@@ -44,7 +44,7 @@ class HttpServiceTest {
         String name = "yellow_bird";
         wiremockextension.stubFor(WireMock.get(HttpService.BASE_PATH + "search.php?s=" + name)
                 .willReturn(aResponse().withStatus(200).withBody(responseBody())));
-        List<PartResponse> response = httpService.getCocktailByName("yellow_bird");
+        List<CocktailResponse> response = httpService.getCocktailByName("yellow_bird");
         assertFalse(response.isEmpty());
         assertEquals("Yellow Bird", response.get(0).getStrDrink());
     }
@@ -53,7 +53,7 @@ class HttpServiceTest {
     void getRandomCocktail() {
         wiremockextension.stubFor(WireMock.get(HttpService.BASE_PATH + "random.php")
                 .willReturn(aResponse().withStatus(200).withBody(responseBody())));
-        List<FullResponse> response = httpService.getRandomCocktail();
+        List<InformativeCocktailResponse> response = httpService.getRandomCocktail();
         assertFalse(response.isEmpty());
         assertEquals("Alcoholic", response.get(0).getStrAlcoholic());
     }
