@@ -14,7 +14,7 @@ public class PartResponse {
 
     @Override
     public String toString() {
-        return "\n"+"Drinks{" +
+        return "\n" + "Drinks{" +
                 "Name ='" + strDrink + '\'' +
                 '}';
     }

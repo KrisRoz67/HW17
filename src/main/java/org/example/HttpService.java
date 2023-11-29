@@ -25,8 +25,8 @@ public class HttpService {
 
     public List<FullResponse> getCocktailByFirstLetter(char s) {
         URI uri = URI.create(domain + BASE_PATH + "search.php?f=" + s);
-        JsonNode nodeArray = getNodeArrayOfResponses(uri);
-            return handleFullResponse(nodeArray);
+        JsonNode nodeArray = sendRequest(uri);
+        return handleFullResponse(nodeArray);
     }
 
     public List<PartResponse> getCocktailByName(String name) {
@@ -53,11 +53,11 @@ public class HttpService {
 
     public List<FullResponse> getRandomCocktail() {
         URI uri = URI.create(domain + BASE_PATH + "random.php");
-            JsonNode nodeArray = getNodeArrayOfResponses(uri);
-            return handleFullResponse(nodeArray);
-        }
+        JsonNode nodeArray = sendRequest(uri);
+        return handleFullResponse(nodeArray);
+    }
 
-    public JsonNode getNodeArrayOfResponses(URI uri) {
+    public JsonNode sendRequest(URI uri) {
         HttpRequest request = HttpRequest.newBuilder(uri).GET().build();
         HttpResponse<String> response;
         JsonNode nodeArray = null;
@@ -65,18 +65,17 @@ public class HttpService {
             response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             int statusCode = response.statusCode();
             if (statusCode >= 200 && statusCode < 300) {
-                if (response.body().isBlank()){
+                if (response.body().isBlank()) {
                     log.error("We couldn't find a cocktail that matches your request.");
                     return null;
-                }else {
+                } else {
                     log.info("Status code :" + statusCode);
                     JsonNode node = mapper.readValue(response.body(), JsonNode.class);
                     nodeArray = node.get("drinks");
-                    System.out.println(nodeArray);
                 }
             }
 
-            return  nodeArray;
+            return nodeArray;
         } catch (Exception e) {
             log.error("Something went wrong");
             throw new RuntimeException(e);
@@ -85,7 +84,7 @@ public class HttpService {
 
     public List<FullResponse> handleFullResponse(JsonNode nodeArray) {
         List<FullResponse> fullResponseArray = new ArrayList<>();
-        if (nodeArray!=null && nodeArray.isArray() && !nodeArray.isEmpty()) {
+        if (nodeArray != null && nodeArray.isArray() && !nodeArray.isEmpty()) {
             for (JsonNode objNode : nodeArray) {
                 List<String> ingredients = new ArrayList<>();
                 FullResponse fullResponse1 = new FullResponse();
@@ -104,9 +103,8 @@ public class HttpService {
                 fullResponse1.setStrIngredient(ingredients);
                 fullResponseArray.add(fullResponse1);
             }
-            return  fullResponseArray;
-        }
-        else {
+            return fullResponseArray;
+        } else {
             log.error("No data to present");
             return null;
         }
