@@ -11,7 +11,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
@@ -24,18 +23,27 @@ public class HttpService {
     private final String domain;
     private final ObjectMapper mapper = new ObjectMapper();
     public static final String BASE_PATH = "/api/json/v1/1/";
+    private static final TypeReference<List<CocktailResponse>> COCKTAIL_RESPONSE_TYPE_REFERENCE
+            = new TypeReference<>() {
+    };
+    private static final TypeReference<List<InformativeCocktailResponse>> INFORMATIVE_RESPONSE_TYPE_REFERENCE
+            = new TypeReference<>() {
+    };
 
     public List<InformativeCocktailResponse> getCocktailByFirstLetter(char s) {
         URI uri = URI.create(domain + BASE_PATH + "search.php?f=" + s);
         JsonNode nodeArray = sendRequest(uri);
-        return handleFullResponse(nodeArray);
+        return handleFullResponse(nodeArray, INFORMATIVE_RESPONSE_TYPE_REFERENCE);
     }
 
     public List<CocktailResponse> getCocktailByName(String name) {
         URI uri = URI.create(domain + BASE_PATH + "search.php?s=" + name);
         JsonNode nodeArray = sendRequest(uri);
+        if (nodeArray == null) {
+            return null;
+        }
         try {
-            return mapper.readValue(nodeArray.toString(), new TypeReference<List<CocktailResponse>>() {
+            return mapper.readValue(nodeArray.toString(), new TypeReference<>() {
             });
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -45,7 +53,7 @@ public class HttpService {
     public List<InformativeCocktailResponse> getRandomCocktail() {
         URI uri = URI.create(domain + BASE_PATH + "random.php");
         JsonNode nodeArray = sendRequest(uri);
-        return handleFullResponse(nodeArray);
+        return handleFullResponse(nodeArray, INFORMATIVE_RESPONSE_TYPE_REFERENCE);
     }
 
     public JsonNode sendRequest(URI uri) {
@@ -57,15 +65,21 @@ public class HttpService {
             int statusCode = response.statusCode();
             if (statusCode >= 200 && statusCode < 300) {
                 if (response.body().isBlank()) {
+                    log.info("Status code :" + statusCode);
                     log.error("We couldn't find any cocktail that matches your request.");
                     return null;
                 } else {
                     log.info("Status code :" + statusCode);
+                    log.error("Success response");
                     JsonNode node = mapper.readValue(response.body(), JsonNode.class);
                     nodeArray = node.get("drinks");
                 }
-            }
+            } else if (statusCode >= 400 && statusCode < 500) {
+                log.warn("Client side error");
 
+            } else if (statusCode >= 500) {
+                log.error("Downstream error");
+            }
             return nodeArray;
         } catch (Exception e) {
             log.error("Something went wrong");
@@ -73,12 +87,10 @@ public class HttpService {
         }
     }
 
-    public List<InformativeCocktailResponse> handleFullResponse(JsonNode nodeArray) {
-        List<InformativeCocktailResponse> informativeCocktailResponseArray = new ArrayList<>();
+    public <T> T handleFullResponse(JsonNode nodeArray, TypeReference<T> typeReference) {
         if (nodeArray != null && nodeArray.isArray() && !nodeArray.isEmpty()) {
             try {
-                return mapper.readValue(nodeArray.toString(), new TypeReference<List<InformativeCocktailResponse>>() {
-                });
+                return mapper.readValue(nodeArray.toString(), typeReference);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
